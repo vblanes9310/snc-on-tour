@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SnC on tour</title>
+<meta name="description" content="Live 2-hour weather for the SnC ride from Girona to Manresa.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#123a33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SnC on tour">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a roadbook for the handlebar. One day per tab, one route at a time, one block per card. */
+:root{
+  --bg:#e9efec; --surface:#ffffff; --surface-2:#f3f7f5; --line:#d5dfda;
+  --fg:#14241f; --fg-2:#4a5d56; --fg-3:#6b7d76;
+  --pine:#123a33; --on-pine:#f2f7f4; --on-pine-2:#b4cbc2; --pine-2:#1d5046;
+  --accent:#c2410c; --accent-soft:#fdebe1;
+  --cold:#1d4ed8; --cold-bg:#dbe7ff; --cool:#0b6a94; --cool-bg:#d9eff8;
+  --mild:#0b6b4f; --mild-bg:#d4f2e4; --warm:#a14a06; --warm-bg:#fcecc8;
+  --alert:#be123c; --on-alert:#fff;
+  --note:#fff6e0; --note-line:#efd48c; --note-fg:#5f430a;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow","Segoe UI",system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0e1714; --surface:#16231f; --surface-2:#1c2c27; --line:#2b3d37;
+  --fg:#e8f0ec; --fg-2:#b2c3bc; --fg-3:#8fa39b;
+  --accent:#fb8a54; --accent-soft:#3a2115;
+  --cold:#a9c4ff; --cold-bg:#1e3263; --cool:#94d6f2; --cool-bg:#123f53;
+  --mild:#90e6c2; --mild-bg:#124234; --warm:#f8cf7c; --warm-bg:#4a3510;
+  --alert:#e11d48;
+  --note:#2c2410; --note-line:#5c4a1c; --note-fg:#f3dfa8;
+  color-scheme:dark;
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--pine)}
+a{color:inherit}
+[hidden]{display:none!important}
+.wrap{max-width:640px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.top{background:var(--pine);color:var(--on-pine);padding-top:calc(20px + env(safe-area-inset-top,0px));padding-bottom:16px}
+.top p{margin:0;color:var(--on-pine-2);font-size:15px}
+h1{margin:2px 0 0;font-family:var(--display);font-weight:700;font-size:42px;line-height:1;letter-spacing:.005em}
+
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--pine);padding-block:0 12px}
+.tabrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.tab{appearance:none;border:0;border-radius:8px;background:var(--pine-2);color:var(--on-pine);font:inherit;padding:8px 4px 7px;cursor:pointer;text-align:center;min-height:58px}
+.tab b{display:block;font-family:var(--display);font-size:20px;line-height:1.1;font-weight:700}
+.tab span{display:block;font-size:14px;color:var(--on-pine-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--on-pine);color:var(--pine)}
+.tab[aria-selected="true"] span{color:var(--pine)}
+button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.status{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 0}
+.status p{margin:0;font-size:15px;color:var(--fg-2);min-width:0}
+.status p b{color:var(--fg);font-weight:600}
+.status .off b{color:var(--accent)}
+.refresh{appearance:none;flex:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 15px/1 var(--body);border-radius:8px;min-height:44px;padding:0 14px;cursor:pointer}
+.refresh:disabled{opacity:.6;cursor:default}
+
+main{display:grid;gap:14px;padding-block:14px 8px}
+h2{margin:0;font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05}
+.stage{margin:2px 0 0;color:var(--fg-2)}
+
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px}
+.seg button{appearance:none;border:0;background:transparent;color:var(--fg-2);font:600 15px/1.2 var(--body);padding:10px 6px;border-radius:7px;cursor:pointer;min-height:44px}
+.seg button[aria-pressed="true"]{background:var(--pine);color:var(--on-pine)}
+
+.facts{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:15px;color:var(--fg-2);font-variant-numeric:tabular-nums}
+.facts b{color:var(--fg);font-weight:600}
+.ext{color:var(--accent);font-weight:600;text-underline-offset:3px}
+
+.blocks{display:grid;gap:10px;list-style:none;margin:0;padding:0}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.head{display:flex;align-items:center;gap:10px}
+.time{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.temp{margin-left:auto;font-family:var(--display);font-weight:700;font-size:24px;line-height:1;border-radius:7px;padding:5px 9px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.t1{background:var(--cold-bg);color:var(--cold)}.t2{background:var(--cool-bg);color:var(--cool)}
+.t3{background:var(--mild-bg);color:var(--mild)}.t4{background:var(--warm-bg);color:var(--warm)}
+.where{margin:0;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0;font-variant-numeric:tabular-nums}
+.stats div{min-width:0}
+.stats dt{font-size:13px;color:var(--fg-3)}
+.stats dd{margin:0;font-weight:600;white-space:nowrap}
+.gust{background:var(--alert);color:var(--on-alert);border-radius:5px;padding:0 5px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:8px}
+.sky{font-size:15px;color:var(--fg-2);min-width:0}
+.live{display:inline-flex;align-items:center;flex:none;min-height:44px;padding:0 14px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:15px;text-decoration:none;white-space:nowrap}
+
+.note{background:var(--note);border:1px solid var(--note-line);color:var(--note-fg);border-radius:12px;padding:12px 14px;display:grid;gap:6px}
+.note p{margin:0}
+.note b{font-weight:700}
+.wear{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.wear h3{margin:0 0 8px;font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1}
+.wear dl{display:grid;gap:10px;margin:0}
+.wear dt{font-weight:700}
+.wear dd{margin:0;color:var(--fg-2)}
+footer{padding-top:6px;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));color:var(--fg-3);font-size:14px}
+footer p{margin:0 0 6px}
+@media (prefers-reduced-motion:no-preference){.tab,.seg button{transition:background-color .15s ease,color .15s ease}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <p>Girona to Manresa &middot; 19&ndash;22 November</p>
+  <h1>SnC on tour</h1>
+</div></header>
+<nav class="tabs" aria-label="Days"><div class="wrap"><div class="tabrow" id="tabs" role="tablist"></div></div></nav>
+<div class="wrap status"><p id="status" role="status">Loading the latest forecast&hellip;</p><button class="refresh" id="refresh" type="button">Refresh</button></div>
+<main class="wrap" id="main"></main>
+<footer class="wrap">
+  <p>Times assume a 09:00 start, with Komoot riding time plus 20% for stops. Each block covers where you should be during those two hours, including its highest point.</p>
+  <p>Yr opens a second forecast for the highest point of that block. Yr shows wind in m/s: multiply by 3.6 for km/h.</p>
+  <p>Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0).</p>
+</footer>
+
+<script>
+/* Saved values (a,b,f,r,v,g,s) are the 18 Nov forecast, shown until live data arrives.
+   k = highest point of the block: [lat, lng, altitude, clock hour]. pts = position on each clock hour. */
+const DAYS=[
+{key:"thu",tab:"Thu 19",date:"2026-11-19",when:"Thursday 19",stage:"Girona to Sant Joan de les Abadesses",
+ tip:"The lowest and warmest day of the trip.",
+ wear:[["At the start","Thin base layer, short-sleeve jersey, bib shorts, thin gloves. Arm warmers in your pocket."],["Last climb, from about 13:30","Arm warmers on near the 1,067 m top. Add the vest for the descent to Sant Joan."],["Stays in the bag","C3 Thermo, shell, leg warmers, warm gloves, puffy."]],
+ routes:[{id:"D1",n:"Day 1",tour:"3398666114",km:"81.0",up:"1,550",top:"1,067",arr:"14:45",
+  pts:{9:[41.979,2.8163,75],10:[42.0913,2.823,95],11:[42.1252,2.7084,282],12:[42.1494,2.5851,427],13:[42.1934,2.4752,426],14:[42.2021,2.3853,927],15:[42.2334,2.287,778]},rows:[
+  {t:"09–11",w:"Girona, Cornellà del Terri, Banyoles",k:[42.1263,2.7101,285,11],a:16,b:16,f:"14–16",r:3,v:10,g:27,s:"Partly cloudy"},
+  {t:"11–13",w:"Banyoles, Santa Pau, Olot",k:[42.1463,2.5452,641,12],a:14,b:16,f:"13–15",r:5,v:10,g:27,s:"Clear"},
+  {t:"13–15",w:"Olot, Riudaura, Sant Joan",k:[42.2097,2.3344,1067,14],a:11,b:16,f:"9–15",r:5,v:8,g:26,s:"Mostly clear"}]}]},
+{key:"fri",tab:"Fri 20",date:"2026-11-20",when:"Friday 20",stage:"Sant Joan de les Abadesses to Bagà",
+ tip:"Shaded bends can stay icy after a cold night, especially on the ROAD route.",
+ wear:[["At the start","Thin base layer, C3 Thermo, bib shorts, leg warmers, vest and shell on top, warm gloves, buff, headband, toe covers."],["Climbing, from about 10:30","Shell and vest off, thin gloves on, Thermo zip open."],["Descents","Zip closed, vest and shell on, warm gloves, buff. On the ROAD route, add the puffy under the shell from 2,104 m."],["Stays in the bag","Kipsta, kept dry for the evening."]],
+ routes:[{id:"D2",n:"Day 2",tour:"3382703984",km:"70.8",up:"2,050",top:"1,709",arr:"16:40",
+  pts:{9:[42.2333,2.2869,777],10:[42.2213,2.1705,733],11:[42.2478,2.0919,890],12:[42.2659,2.0769,1298],13:[42.2816,2.0386,1454],14:[42.2775,1.9699,1281],15:[42.2791,1.9145,1262],16:[42.2842,1.893,1697],17:[42.2531,1.8611,802]},rows:[
+  {t:"09–11",w:"Sant Joan, Ripoll, Campdevànol, Gombrèn",k:[42.2451,2.0945,889,11],a:3,b:8,f:"1–6",r:0,v:3,g:8,s:"Clear"},
+  {t:"11–13",w:"Gombrèn to Castellar de n'Hug",k:[42.2758,2.0613,1460,13],a:8,b:9,f:"5–6",r:0,v:6,g:17,s:"Clear"},
+  {t:"13–15",w:"Castellar de n'Hug towards Guardiola",k:[42.2831,2.0312,1489,13],a:8,b:10,f:"5–8",r:0,v:8,g:22,s:"Clear"},
+  {t:"15–17",w:"Final climb, descent to Bagà",k:[42.2835,1.8917,1709,16],a:6,b:10,f:"4–9",r:0,v:8,g:22,s:"Clear"}]},
+ {id:"D2R",n:"Day 2 ROAD",tour:"3382702913",km:"80.3",up:"1,970",top:"2,104",arr:"16:25",
+  pts:{9:[42.2333,2.2869,777],10:[42.2213,2.1705,733],11:[42.2506,2.0803,955],12:[42.2718,2.0408,1229],13:[42.2933,2.0314,1633],14:[42.315,1.9707,1777],15:[42.3293,1.9171,1947],16:[42.2855,1.8794,1422],17:[42.2531,1.8611,801]},rows:[
+  {t:"09–11",w:"Sant Joan, Ripoll, Campdevànol, Gombrèn",k:[42.2504,2.0809,954,11],a:3,b:8,f:"1–6",r:0,v:3,g:8,s:"Clear"},
+  {t:"11–13",w:"Gombrèn to Castellar de n'Hug",k:[42.2927,2.0317,1626,13],a:7,b:9,f:"4–6",r:0,v:6,g:15,s:"Clear"},
+  {t:"13–15",w:"Toses, Alp side",k:[42.3299,1.9176,1937,15],a:4,b:7,f:"1–4",r:0,v:9,g:21,s:"Clear"},
+  {t:"15–17",w:"High point, descent to Bagà",k:[42.3038,1.9225,2104,16],a:3,b:10,f:"0–9",r:0,v:8,g:22,s:"Clear"}]}]},
+{key:"sat",tab:"Sat 21",date:"2026-11-21",when:"Saturday 21",stage:"Bagà to Sant Llorenç de Morunys",
+ tip:"Watch for crosswinds between Saldes and Gósol.",
+ wear:[["At the start","Thin base layer, C3 Thermo, bib shorts, leg warmers, vest, thin gloves, headband, toe covers."],["Climbing","Vest off and Thermo zip open."],["Exposed sections","Vest back on from the high point through Saldes and Gósol. The Thermo isn't windproof."],["Descents","Shell over the vest, warm gloves, buff. Keep the shell within reach all day."]],
+ routes:[{id:"D3",n:"Day 3",tour:"3382705851",km:"62.6",up:"1,880",top:"1,574",arr:"16:20",
+  pts:{9:[42.2531,1.8611,795],10:[42.2638,1.8028,1020],11:[42.2597,1.7819,1342],12:[42.2603,1.7244,1243],13:[42.2237,1.7278,1218],14:[42.1822,1.6995,1245],15:[42.1514,1.6985,1446],16:[42.1329,1.618,826],17:[42.1369,1.5909,920]},rows:[
+  {t:"09–11",w:"Bagà to Gisclareny",k:[42.2611,1.7793,1342,11],a:7,b:9,f:"5–8",r:11,v:5,g:25,s:"Overcast"},
+  {t:"11–13",w:"High point, then Saldes",k:[42.2645,1.7414,1574,12],a:7,b:12,f:"4–9",r:13,v:14,g:50,s:"Cloudy"},
+  {t:"13–15",w:"Saldes, Gósol, Guixers",k:[42.1573,1.6977,1488,15],a:10,b:12,f:"8–9",r:14,v:14,g:51,s:"Cloudy"},
+  {t:"15–17",w:"Guixers to Sant Llorenç",k:[42.1514,1.6985,1446,15],a:11,b:13,f:"8–11",r:12,v:11,g:47,s:"Overcast"}]},
+ {id:"D3R",n:"Day 3 ROAD",tour:"3382703422",km:"75.3",up:"2,350",top:"1,681",arr:"17:00",
+  pts:{9:[42.2531,1.8611,795],10:[42.263,1.8242,964],11:[42.2523,1.7759,1361],12:[42.2644,1.7381,1529],13:[42.2384,1.7495,988],14:[42.2178,1.6975,1322],15:[42.2469,1.5946,1241],16:[42.2228,1.5423,1527],17:[42.1369,1.5909,926]},rows:[
+  {t:"09–11",w:"Bagà to Gisclareny",k:[42.2542,1.8016,1348,11],a:7,b:10,f:"5–8",r:8,v:5,g:25,s:"Overcast"},
+  {t:"11–13",w:"Gisclareny, down towards Saldes",k:[42.2646,1.7413,1569,12],a:7,b:14,f:"5–13",r:13,v:11,g:46,s:"Cloudy"},
+  {t:"13–15",w:"Saldes, Gósol, Josa i Tuixén",k:[42.2509,1.6505,1625,15],a:8,b:14,f:"6–13",r:14,v:13,g:51,s:"Cloudy"},
+  {t:"15–17",w:"Josa, high point, Sant Llorenç",k:[42.2097,1.5496,1681,16],a:7,b:12,f:"4–10",r:14,v:8,g:37,s:"Overcast"}]}]},
+{key:"sun",tab:"Sun 22",date:"2026-11-22",when:"Sunday 22",stage:"Sant Llorenç de Morunys to Manresa",
+ tip:"Buy food on Saturday, as many shops close on Sunday.",
+ wear:[["At the start","Thin base layer, short-sleeve jersey, bib shorts, arm warmers, knee or leg warmers, vest, thin gloves."],["From about 12:00","Below 500 m, take off the warmers and vest. Via Cardona, keep the vest on until Súria if it's windy."],["Stays in the bag","C3 Thermo, shell, warm gloves, puffy."]],
+ routes:[{id:"D4",n:"Via Berga",tour:"3396211410",km:"79.4",up:"890",top:"1,228",arr:"13:20",
+  pts:{9:[42.1369,1.5909,920],10:[42.106,1.7335,963],11:[42.0751,1.8591,540],12:[41.9096,1.88,369],13:[41.7714,1.8792,282],14:[41.732,1.8331,248]},rows:[
+  {t:"09–11",w:"Sant Llorenç, Capolat, Berga, Avià",k:[42.095,1.7593,1228,11],a:9,b:11,f:"6–10",r:9,v:12,g:41,s:"Clear"},
+  {t:"11–13",w:"Avià, Gironella, Puig-reig, Sallent",k:[42.0751,1.8591,540,11],a:11,b:16,f:"10–14",r:1,v:12,g:24,s:"Mostly clear"},
+  {t:"13–15",w:"Sant Fruitós de Bages to Manresa",k:[41.7699,1.8783,284,13],a:16,b:17,f:"14",r:0,v:16,g:43,s:"Clear"}]},
+ {id:"D4A",n:"Via Cardona",tour:"3398666751",km:"77.0",up:"890",top:"920",arr:"13:05",
+  pts:{9:[42.1369,1.5909,920],10:[42.0265,1.5613,601],11:[41.932,1.6468,455],12:[41.819,1.7555,313],13:[41.7358,1.8436,265]},rows:[
+  {t:"09–11",w:"Sant Llorenç, Solsona, Clariana de Cardener",k:[42.1369,1.5909,920,9],a:9,b:12,f:"6–8",r:9,v:22,g:46,s:"Mostly clear"},
+  {t:"11–13",w:"Cardona, Súria, Manresa",k:[41.932,1.6468,455,11],a:12,b:16,f:"8–14",r:1,v:22,g:46,s:"Clear"}]}]}
+];
+
+const CACHE_KEY="snc-live-v1", STALE_MS=30*60*1000;
+const VARS="temperature_2m,apparent_temperature,precipitation,precipitation_probability,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m";
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const num=n=>String(Math.round(n)+0).replace("-","−");
+const range=(a,b)=>Math.round(a)===Math.round(b)?num(a):`${num(a)}–${num(b)}`;
+const tempClass=v=>v<=4?"t1":v<=8?"t2":v<=12?"t3":"t4";
+const madridToday=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Madrid"}).format(new Date());
+const dayOffset=date=>Math.max(0,Math.round((Date.parse(date+"T00:00:00Z")-Date.parse(madridToday()+"T00:00:00Z"))/864e5));
+const yrLink=(k,date)=>`https://www.yr.no/en/forecast/hourly-table/${k[0]},${k[1]}?i=${dayOffset(date)}`;
+
+let live=null;
+try{live=JSON.parse(store.get(CACHE_KEY)||"null")}catch(e){live=null}
+
+/* Turn hourly model data into the numbers shown for each 2-hour block. */
+function skyText(codes,clouds){
+  if(codes.some(c=>c>=95))return"Storms";
+  if(codes.some(c=>(c>=71&&c<=77)||c===85||c===86))return"Snow";
+  if(codes.some(c=>(c>=51&&c<=67)||(c>=80&&c<=82)))return"Rain";
+  if(codes.some(c=>c===45||c===48))return"Fog";
+  const m=clouds.reduce((s,c)=>s+c,0)/clouds.length;
+  return m<20?"Clear":m<45?"Mostly clear":m<70?"Partly cloudy":m<90?"Cloudy":"Overcast";
+}
+async function fetchRoute(route,date,signal){
+  const hours=Object.keys(route.pts).map(Number).sort((a,b)=>a-b);
+  const locs=[...hours.map(h=>({h,p:route.pts[h]})),...route.rows.map(r=>({h:r.k[3],p:r.k}))];
+  const q=new URLSearchParams({latitude:locs.map(l=>l.p[0]).join(","),longitude:locs.map(l=>l.p[1]).join(","),elevation:locs.map(l=>l.p[2]).join(","),hourly:VARS,timezone:"Europe/Madrid",start_date:date,end_date:date});
+  const res=await fetch("https://api.open-meteo.com/v1/forecast?"+q,{signal,cache:"no-store"});
+  if(!res.ok)throw new Error("HTTP "+res.status);
+  let data=await res.json();
+  if(!Array.isArray(data))data=[data];
+  const read=(i,h)=>{const H=data[i].hourly;return{t:H.temperature_2m[h],f:H.apparent_temperature[h],mm:H.precipitation[h],r:H.precipitation_probability[h],c:H.weather_code[h],cl:H.cloud_cover[h],v:H.wind_speed_10m[h],g:H.wind_gusts_10m[h]}};
+  return route.rows.map((row,ri)=>{
+    const h0=parseInt(row.t,10);
+    const inBlock=hours.map((h,i)=>({h,i})).filter(x=>x.h>=h0&&x.h<=h0+2);
+    const samples=inBlock.map(x=>read(x.i,x.h));
+    const peak=read(hours.length+ri,row.k[3]);
+    const all=[...samples,peak];
+    const nums=key=>all.map(s=>s[key]).filter(v=>typeof v==="number");
+    const ts=nums("t"),fs=nums("f");
+    if(!ts.length)throw new Error("No data");
+    return{a:Math.round(Math.min(...ts)),b:Math.round(Math.max(...ts)),f:range(Math.min(...fs),Math.max(...fs)),
+      r:Math.round(Math.max(0,...nums("r"))),v:Math.round(Math.max(...nums("v"))),g:Math.round(Math.max(...nums("g"))),
+      mm:+inBlock.filter(x=>x.h>h0).map(x=>read(x.i,x.h).mm||0).reduce((s,m)=>s+m,0).toFixed(1),
+      s:skyText(nums("c"),nums("cl"))};
+  });
+}
+async function refresh(){
+  const btn=document.getElementById("refresh");
+  btn.disabled=true;btn.textContent="Loading…";
+  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),15000);
+  try{
+    const jobs=DAYS.flatMap(d=>d.routes.map(async r=>[r.id,await fetchRoute(r,d.date,ctl.signal)]));
+    const routes=Object.fromEntries(await Promise.all(jobs));
+    live={at:new Date().toISOString(),routes};
+    store.set(CACHE_KEY,JSON.stringify(live));
+    showStatus(true);render();
+  }catch(e){showStatus(false)}
+  finally{clearTimeout(timer);btn.disabled=false;btn.textContent="Refresh"}
+}
+function whenText(iso){
+  const d=new Date(iso),now=new Date();
+  const time=d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  return d.toDateString()===now.toDateString()?`today at ${time}`:`${d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})} at ${time}`;
+}
+function showStatus(ok){
+  const el=document.getElementById("status");
+  el.className=ok?"":"off";
+  if(ok)el.innerHTML=`<b>Live forecast.</b> Updated ${whenText(live.at)}.`;
+  else if(live)el.innerHTML=`<b>No connection.</b> Showing the forecast from ${whenText(live.at)}.`;
+  else el.innerHTML=`<b>No connection.</b> Showing the forecast saved on 18 Nov.`;
+}
+
+/* Page */
+const rowsFor=route=>route.rows.map((row,i)=>({...row,...(live&&live.routes&&live.routes[route.id]?live.routes[route.id][i]:{})}));
+function startDay(){return DAYS.find(d=>"#"+d.key===location.hash)||DAYS.find(d=>d.date===madridToday())||DAYS[0]}
+let day=startDay();
+
+function dayRange(d){const r=d.routes.flatMap(rowsFor);return `${range(Math.min(...r.map(x=>x.a)),Math.max(...r.map(x=>x.b)))}°`}
+function blockHtml(b){
+  const gust=b.g>=40?`<span class="gust">${b.g}</span>`:b.g;
+  const wet=b.mm>=0.1?` &middot; ${b.mm} mm`:"";
+  return `<li class="block">
+    <div class="head"><span class="time">${b.t}</span><span class="temp ${tempClass(b.a)}">${range(b.a,b.b)}°</span></div>
+    <p class="where">${b.w}</p>
+    <dl class="stats">
+      <div><dt>Feels</dt><dd>${String(b.f).replace(/^-/,"−")}°</dd></div>
+      <div><dt>Rain</dt><dd>${b.r}%</dd></div>
+      <div><dt>Wind</dt><dd>${b.v} km/h</dd></div>
+      <div><dt>Gusts</dt><dd>${gust}</dd></div>
+    </dl>
+    <div class="foot"><span class="sky">${b.s}${wet} &middot; up to ${b.k[2].toLocaleString("en-US")} m</span>
+      <a class="live" href="${yrLink(b.k,day.date)}" target="_blank" rel="noopener">Yr &#8599;</a></div>
+  </li>`;
+}
+function noteHtml(rows){
+  const cold=Math.min(...rows.map(r=>r.a)),gust=Math.max(...rows.map(r=>r.g)),rain=Math.max(...rows.map(r=>r.r)),mm=rows.reduce((s,r)=>s+(r.mm||0),0);
+  const tips=[];
+  if(rows[0].a<=2)tips.push("Cold start: add the Kipsta under the Thermo.");
+  if(cold<=1)tips.push("Near freezing up high: shaded bends could be icy.");
+  if(gust>=40)tips.push("Strong gusts: take care on exposed sections and descents.");
+  if(rain>=40||mm>=1)tips.push("Rain is likely: keep the shell within reach.");
+  if(rows.some(r=>r.s==="Snow"))tips.push("Snow is possible on the high sections: check the road before you commit.");
+  tips.push(day.tip);
+  return `<div class="note"><p><b>Coldest ${num(cold)}°, gusts up to ${gust} km/h, rain chance up to ${rain}%.</b></p><p>${tips.join(" ")}</p></div>`;
+}
+function render(){
+  document.getElementById("tabs").innerHTML=DAYS.map(d=>`<button class="tab" id="tab-${d.key}" role="tab" aria-selected="${d===day}" data-day="${d.key}"><b>${d.tab}</b><span>${dayRange(d)}</span></button>`).join("");
+  const saved=Number(store.get("route-"+day.key))||0;
+  const idx=saved<day.routes.length?saved:0;
+  const r=day.routes[idx],rows=rowsFor(r);
+  const seg=day.routes.length>1?`<div class="seg" role="group" aria-label="Route">${day.routes.map((x,i)=>`<button id="route-${day.key}-${i}" aria-pressed="${i===idx}" data-route="${i}">${x.n}</button>`).join("")}</div>`:"";
+  document.getElementById("main").innerHTML=`
+    <div><h2>${day.when}</h2><p class="stage">${day.stage}</p></div>
+    ${seg}
+    <p class="facts"><span><b>${r.km} km</b></span><span><b>${r.up} m</b> up</span><span>top <b>${r.top} m</b></span><span>arrive <b>~${r.arr}</b></span><a class="ext" href="https://www.komoot.com/tour/${r.tour}" target="_blank" rel="noopener">Route &#8599;</a></p>
+    <ul class="blocks">${rows.map(blockHtml).join("")}</ul>
+    ${noteHtml(rows)}
+    <section class="wear"><h3>What to wear</h3><dl>${day.wear.map(w=>`<div><dt>${w[0]}</dt><dd>${w[1]}</dd></div>`).join("")}</dl></section>`;
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-day]");
+  if(t){day=DAYS.find(d=>d.key===t.dataset.day);try{history.replaceState(null,"","#"+day.key)}catch(err){}render();window.scrollTo(0,0);return}
+  const s=e.target.closest("[data-route]");
+  if(s){store.set("route-"+day.key,s.dataset.route);render()}
+});
+document.getElementById("refresh").addEventListener("click",refresh);
+window.addEventListener("hashchange",()=>{day=startDay();render()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&(!live||Date.now()-Date.parse(live.at)>STALE_MS))refresh()});
+window.addEventListener("online",refresh);
+render();
+if(live)showStatus(true);
+refresh();
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
